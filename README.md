@@ -22,3 +22,8 @@ or
 ```bash
 make run
 ```
+
+
+## Adding data to the project
+To add datas into the project you have to add the datas into the folder data. 
+Either into the test or train folder.
