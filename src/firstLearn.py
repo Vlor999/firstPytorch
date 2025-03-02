@@ -12,38 +12,46 @@ def initdata(isOwnData=False):
     transform = transforms.Compose([
         transforms.Resize((32, 32)),
         transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        transforms.Normalize((0.5,), (0.5,)) if isOwnData else transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
     ])
     
     if isOwnData:
-        trainset = ImageFolder(root='./data/train', transform=transform)
-        testset = ImageFolder(root='./data/test', transform=transform)
-        classes = trainset.classes  # Récupérer les classes automatiquement
+        trainset = torchvision.datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+        testset = torchvision.datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+        
+        trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=2)
+        testloader = torch.utils.data.DataLoader(testset, batch_size=64, shuffle=False, num_workers=2)
+        
+        classes = tuple(str(i) for i in range(10))
     else:
         trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
         testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
         classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
     
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=4, shuffle=True, num_workers=2)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=4, shuffle=False, num_workers=2)
+        trainloader = torch.utils.data.DataLoader(trainset, batch_size=4, shuffle=True, num_workers=2)
+        testloader = torch.utils.data.DataLoader(testset, batch_size=4, shuffle=False, num_workers=2)
     
     return trainloader, testloader, classes
 
-def imshow(img):
-    img = img / 2 + 0.5  # Unnormalize
+def imshow(img, classes, labels, isGrey = False):
+    img = img / 2 + 0.5
     npimg = img.numpy()
-    plt.imshow(np.transpose(npimg, (1, 2, 0)))
+    print(' '.join(classes[labels[j]] for j in range(4)))
+    if isGrey:
+        plt.imshow(np.transpose(npimg, (1, 2, 0)), cmap='gray')
+    else:
+        plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.show()
 
 class Net(nn.Module):
-    def __init__(self, num_classes):
+    def __init__(self, num_classes, isGrey):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
+        self.conv1 = nn.Conv2d(1 if isGrey else 3, 6, 5)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(6, 16, 5)
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, num_classes)  # Adapté au nombre de classes
+        self.fc3 = nn.Linear(84, num_classes)
     
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))
@@ -56,11 +64,11 @@ class Net(nn.Module):
 
 def loopDataSet(trainloader, optimizer, net, criterion, device):
     net.to(device)
-    for epoch in range(5):  # Augmenté à 5 époques
+    for epoch in range(5):
         running_loss = 0.0
         for i, data in enumerate(trainloader, 0):
             inputs, labels = data
-            inputs, labels = inputs.to(device), labels.to(device)  # Envoi sur GPU si dispo
+            inputs, labels = inputs.to(device), labels.to(device)
             
             optimizer.zero_grad()
             outputs = net(inputs)
@@ -89,16 +97,15 @@ def accuracy(testloader, net, device):
     print(f'Accuracy: {100 * correct / total:.2f}%')
 
 def main():
-    isOwnData = False  # Mettre à True pour utiliser tes propres images
+    isOwnData = True  # Mettre à True pour utiliser tes propres images
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     trainloader, testloader, classes = initdata(isOwnData)
     
     dataiter = iter(trainloader)
     images, labels = next(dataiter)
-    imshow(torchvision.utils.make_grid(images))
-    print(' '.join(classes[labels[j]] for j in range(4)))
+    imshow(torchvision.utils.make_grid(images), classes, labels)
     
-    net = Net(len(classes)).to(device)
+    net = Net(len(classes), isOwnData).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
     
