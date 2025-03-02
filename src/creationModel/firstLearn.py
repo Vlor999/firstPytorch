@@ -1,12 +1,17 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
-from torchvision.datasets import ImageFolder
 import torchvision
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 import numpy as np
+
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from modelisationNet.model import Net
+from commandLine import parse_arguments
 
 def initdata(isOwnData=False):
     transform = transforms.Compose([
@@ -43,25 +48,6 @@ def imshow(img, classes, labels, isGrey = False):
         plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.show()
 
-class Net(nn.Module):
-    def __init__(self, num_classes, isGrey):
-        super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(1 if isGrey else 3, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, num_classes)
-    
-    def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 5 * 5)
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
-
 def loopDataSet(trainloader, optimizer, net, criterion, device):
     net.to(device)
     for epoch in range(5):
@@ -97,20 +83,30 @@ def accuracy(testloader, net, device):
     print(f'Accuracy: {100 * correct / total:.2f}%')
 
 def main():
-    isOwnData = True  # Mettre à True pour utiliser tes propres images
+    args = parse_arguments()
+
+    isOwnData = args.c
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     trainloader, testloader, classes = initdata(isOwnData)
-    
+
     dataiter = iter(trainloader)
     images, labels = next(dataiter)
-    imshow(torchvision.utils.make_grid(images), classes, labels)
-    
+    imshow(torchvision.utils.make_grid(images), classes, labels, isGrey=isOwnData)
+
     net = Net(len(classes), isOwnData).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
-    
+
     loopDataSet(trainloader, optimizer, net, criterion, device)
+
     accuracy(testloader, net, device)
+
+    if args.s:
+        outputFile = "src/model/model-" + "image" if not args.c else "chiffre" + ".pth"
+        torch.save(net.state_dict(), outputFile)
+        print(f"Modèle sauvegardé sous '{outputFile}'")
+
 
 if __name__ == "__main__":
     main()
