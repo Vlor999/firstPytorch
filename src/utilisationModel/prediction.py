@@ -9,7 +9,7 @@ from chargementModele import chargementModel
 from subprocess import run
 
 IMAGE_PATH_FORMAT = "src/data/images/"
-IMAGE_PATH = "src/data/images/image-cinq.jpg"
+IMAGE_PATH = "src/data/images/Figure_2.jpg"
 
 def foundInfo(format):
     listElem = format.split("-")

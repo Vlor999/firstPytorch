@@ -1,6 +1,6 @@
-PYTHON = python3.13
-SRC = src
-FILELEARN = firstLearn.py
+PYTHON=python3.13
+SRC=src
+FILELEARN=firstLearn.py
 PREDICTION=prediction.py
 CREATION=creationModel
 UTILISATION=utilisationModel
@@ -8,7 +8,7 @@ UTILISATION=utilisationModel
 all: run
 
 run:
-	$(PYTHON) $(SRC)/$(CREATION)/$(FILELEARN)
+	$(PYTHON) $(SRC)/$(CREATION)/$(FILELEARN) $(ARGS)
 
 prediction:
 	$(PYTHON) $(SRC)/$(UTILISATION)/$(PREDICTION)

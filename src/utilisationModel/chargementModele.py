@@ -9,8 +9,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from modelisationNet.model import Net
 
 DIR = "src/model/"
-MODEL_CHIFFRE = "chiffre.pth"
-MODEL_IMAGE = "image.pth"
+MODEL_CHIFFRE = "model-chiffre.pth"
+MODEL_IMAGE = "model-image.pth"
 
 def detect_model_file():
     """
