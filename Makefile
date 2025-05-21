@@ -13,5 +13,12 @@ run:
 prediction:
 	$(PYTHON) $(SRC)/$(UTILISATION)/$(PREDICTION)
 
+venv:
+	$(PYTHON) -m venv venv
+	source venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt
+
 open_data:
 	open ./data/cifar-10-batches-py/readme.html
+
+clean:
+	rm -rf venv
